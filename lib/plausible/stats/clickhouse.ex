@@ -598,6 +598,67 @@ defmodule Plausible.Stats.Clickhouse do
 
     pages = ClickhouseRepo.all(q)
 
+    if "time_on_page" in include do
+      if Enum.count(pages) > 0 do
+        page_names = Enum.map(pages, fn r -> r[:name] end)
+
+        base_q =
+          from(e in base_query_w_sessions_bare(site, query),
+            where: fragment("? IN tuple(?)", e.pathname, ^page_names),
+            where: e.name == "pageview",
+            select: %{
+              pathname: e.pathname,
+              timestamp: e.timestamp,
+              session_id: e.session_id
+            },
+            order_by: [asc: :session_id, asc: :timestamp]
+          )
+
+        IO.inspect base_q
+
+        neighbor_q =
+          from(e in "events",
+            where: e.timestamp in subquery(base_q),
+            select: %{
+              p: e.pathname,
+              t: e.timestamp,
+              s: e.session_id,
+              t2: fragment("neighbor(?, 1) as t2", e.timestamp),
+              p2: fragment("neighbor(?, 1) as p2", e.pathname),
+              s2: fragment("neighbor(?, 1) as s2", e.session_id),
+            }
+          )
+
+        IO.inspect neighbor_q
+        IO.inspect ClickhouseRepo.all(neighbor_q)
+
+        # WHERE s=s2
+        # GROUP BY p,p2,s
+        # SELECT
+        # p,
+        # p2,
+        # sum(t2-t) as td
+
+
+
+        # delta_q =
+        #   from(e in neighbor_q,
+        #     where: fragment("? = s2", e.session_id),
+        #     group_by: fragment("?, p2, ?", e.pathname, e.session_id),
+        #     select: %{
+        #       p: e.pathname,
+        #       p2: fragment("p2"),
+        #       td: fragment("sum(t2-?) as td", e.timestamp)
+        #     }
+        #   )
+
+        # IO.inspect delta_q
+
+        # IO.inspect ClickhouseRepo.all(delta_q)
+
+      end
+    end
+
     if "bounce_rate" in include do
       bounce_rates = bounce_rates_by_page_url(site, query)
       Enum.map(pages, fn url -> Map.put(url, :bounce_rate, bounce_rates[url[:name]]) end)

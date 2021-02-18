@@ -24,7 +24,7 @@ class PagesModal extends React.Component {
   }
 
   loadPages() {
-    const include = this.showBounceRate() ? 'bounce_rate' : null
+    const include = this.showAdditionalStats() ? 'bounce_rate,time_on_page' : null
     const {query, page, pages} = this.state;
 
     const {filters} = query
@@ -41,7 +41,7 @@ class PagesModal extends React.Component {
     this.setState({loading: true, page: this.state.page + 1}, this.loadPages.bind(this))
   }
 
-  showBounceRate() {
+  showAdditionalStats() {
     return this.state.query.period !== 'realtime' && !this.state.query.filters.goal
   }
 
@@ -69,7 +69,8 @@ class PagesModal extends React.Component {
         </td>
         <td className="p-2 w-32 font-medium" align="right">{numberFormatter(page.count)}</td>
         {this.showPageviews() && <td className="p-2 w-32 font-medium" align="right">{numberFormatter(page.pageviews)}</td> }
-        {this.showBounceRate() && <td className="p-2 w-32 font-medium" align="right">{this.formatBounceRate(page)}</td> }
+        {this.showAdditionalStats() && <td className="p-2 w-32 font-medium" align="right">{}</td> }
+        {this.showAdditionalStats() && <td className="p-2 w-32 font-medium" align="right">{this.formatBounceRate(page)}</td> }
       </tr>
     )
   }
@@ -111,7 +112,8 @@ class PagesModal extends React.Component {
                   <th className="p-2 text-xs tracking-wide font-bold text-gray-500 dark:text-gray-400" align="left">Page url</th>
                   <th className="p-2 w-32 text-xs tracking-wide font-bold text-gray-500 dark:text-gray-400" align="right">{ this.label() }</th>
                   {this.showPageviews() && <th className="p-2 w-32 text-xs tracking-wide font-bold text-gray-500 dark:text-gray-400" align="right">Pageviews</th>}
-                  {this.showBounceRate() && <th className="p-2 w-32 text-xs tracking-wide font-bold text-gray-500 dark:text-gray-400" align="right">Bounce rate</th>}
+                  {this.showAdditionalStats() && <th className="p-2 w-32 text-xs tracking-wide font-bold text-gray-500 dark:text-gray-400" align="right">Time on Page</th>}
+                  {this.showAdditionalStats() && <th className="p-2 w-32 text-xs tracking-wide font-bold text-gray-500 dark:text-gray-400" align="right">Bounce rate</th>}
                 </tr>
               </thead>
               <tbody>
