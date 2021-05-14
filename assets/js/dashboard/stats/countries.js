@@ -125,14 +125,6 @@ class Countries extends React.Component {
     });
   }
 
-  geolocationDbNotice() {
-    if (this.props.site.selfhosted) {
-      return (
-        <span className="text-xs text-gray-500 absolute bottom-4 right-3">IP Geolocation by <a target="_blank" href="https://db-ip.com" className="text-indigo-600">DB-IP</a></span>
-      )
-    }
-  }
-
   renderBody() {
     if (this.state.countries) {
       return (
@@ -140,7 +132,6 @@ class Countries extends React.Component {
           <h3 className="font-bold dark:text-gray-100">Countries</h3>
           <div className="mx-auto mt-6" style={{width: '100%', maxWidth: '475px', height: '335px'}} id="map-container"></div>
           <MoreLink site={this.props.site} list={this.state.countries} endpoint="countries" />
-          { this.geolocationDbNotice() }
         </React.Fragment>
       )
     }
