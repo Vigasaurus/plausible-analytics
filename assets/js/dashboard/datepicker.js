@@ -140,7 +140,7 @@ class DatePicker extends React.Component {
       period: false,
       from: false,
       to: false,
-      date: false,
+      date: false
     };
 
     const insertionDate = parseUTCDate(this.props.site.statsBegin);
@@ -209,7 +209,7 @@ class DatePicker extends React.Component {
             period: 'day',
             date: formatISO(from),
             from: false,
-            to: false,
+            to: false
           }
         )
       } else {

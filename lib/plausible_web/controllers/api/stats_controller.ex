@@ -33,6 +33,27 @@ defmodule PlausibleWeb.Api.StatsController do
           row[String.to_existing_atom(selected_metric)] || 0
         end)
 
+      full_intervals =
+      if query.interval == "week" do
+        Enum.map(labels, fn label ->
+          {label,
+           Enum.member?(query.date_range, Timex.beginning_of_week(label)) &&
+             Enum.member?(query.date_range, Timex.end_of_week(label))}
+        end)
+        |> Enum.into(%{})
+      else
+        if query.interval == "month" do
+          Enum.map(labels, fn label ->
+            {label,
+             Enum.member?(query.date_range, Timex.beginning_of_month(label)) &&
+               Enum.member?(query.date_range, Timex.end_of_month(label))}
+          end)
+          |> Enum.into(%{})
+        else
+          nil
+        end
+      end
+
       labels = Enum.map(timeseries_result, fn row -> row[:date] end)
       present_index = present_index_for(site, query, labels)
 
@@ -42,7 +63,8 @@ defmodule PlausibleWeb.Api.StatsController do
         present_index: present_index,
         interval: query.interval,
         with_imported: query.include_imported,
-        imported_source: site.imported_data && site.imported_data.source
+        imported_source: site.imported_data && site.imported_data.source,
+        full_intervals: full_intervals
       })
     else
       _ ->
@@ -87,6 +109,14 @@ defmodule PlausibleWeb.Api.StatsController do
 
         Enum.find_index(dates, &(&1 == current_date))
 
+      "week" ->
+        current_date =
+          Timex.now(site.timezone)
+          |> Timex.to_date()
+          |> date_or_weekstart(query)
+
+        Enum.find_index(dates, &(&1 == current_date))
+
       "month" ->
         current_date =
           Timex.now(site.timezone)
@@ -96,7 +126,11 @@ defmodule PlausibleWeb.Api.StatsController do
         Enum.find_index(dates, &(&1 == current_date))
 
       "minute" ->
-        nil
+        current_date =
+          Timex.now(site.timezone)
+          |> Timex.format!("{YYYY}-{0M}-{0D} {h24}:{0m}:00")
+
+        Enum.find_index(dates, &(&1 == current_date))
     end
   end
 
@@ -1021,6 +1055,16 @@ defmodule PlausibleWeb.Api.StatsController do
     |> (fn res -> [headers | res] end).()
     |> CSV.encode()
     |> Enum.join()
+  end
+
+  defp date_or_weekstart(date, query) do
+    weekstart = Timex.beginning_of_week(date)
+
+    if Enum.member?(query.date_range, weekstart) do
+      weekstart
+    else
+      date
+    end
   end
 
   defp get_country(code) do
